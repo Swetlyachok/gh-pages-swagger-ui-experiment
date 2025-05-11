@@ -1,63 +1,69 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.3",
   "info": {
-    "title": "OpenAPI спецификация Онлайн-магазин",
-    "version": "0.0.1"
+    "title": "Taxi Order Service API",
+    "description": "API для управления сервисом заказа такси",
+    "version": "0.1.0",
+    "contact": {
+      "email": "support@taxi-service.com"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
   },
   "servers": [
     {
-      "url": "http://localhost:8080/api/v1/",
-      "description": "Dev server"
+      "url": "https://api.taxi-service.com/v1",
+      "description": "Production server"
+    },
+    {
+      "url": "https://sandbox.taxi-service.com/v1",
+      "description": "Sandbox server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Orders",
+      "description": "Управление заказами такси"
+    },
+    {
+      "name": "Drivers",
+      "description": "Управление водителями"
     }
   ],
   "paths": {
-    "/products": {
+    "/orders": {
       "get": {
-        "summary": "Метод получения списка товаров",
-        "description": "Метод предназначен для получения списка всех товаров, сохраненных в БД.",
-        "operationId": "getProducts",
         "tags": [
-          "Product"
+          "Orders"
         ],
+        "summary": "Получить список заказов",
+        "operationId": "getOrders",
         "parameters": [
           {
-            "name": "limit",
-            "in": "query",
-            "description": "page limit",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 20
-            }
+            "$ref": "#/components/parameters/OrderListLimit"
           },
           {
-            "name": "offset",
-            "in": "query",
-            "description": "page offset",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 0
-            }
+            "$ref": "#/components/parameters/OrderListOffset"
           }
         ],
         "responses": {
           "200": {
-            "description": "Список товаров",
+            "description": "Успешный запрос",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Products"
+                  "$ref": "#/components/schemas/OrderDetails"
                 }
               }
             }
           },
-          "default": {
-            "description": "Любая неожиданная ошибка",
+          "404": {
+            "description": "Ресурс не найден",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -65,52 +71,44 @@
         }
       },
       "post": {
-        "summary": "Метод добавления нового товара в каталог",
-        "description": "Метод предназначен для сохранения в БД данных по новому товару.",
-        "operationId": "createProduct",
         "tags": [
-          "Product"
+          "Orders"
         ],
+        "summary": "Создать новый заказ такси",
+        "operationId": "createOrder",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Product"
+                "$ref": "#/components/schemas/OrderRequest"
+              },
+              "example": {
+                "pickup_address": "ул. Ленина, 10",
+                "destination_address": "пр. Мира, 25",
+                "customer_id": "cust_12345",
+                "preferred_car_type": "economy"
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Подтверждение успешного сохранения",
+          "201": {
+            "description": "Заказ успешно создан",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Product"
+                  "$ref": "#/components/schemas/OrderResponse"
                 }
               }
             }
           },
           "400": {
-            "description": "Некорректные входные данные. Возвращает список атрибутов с ошибками",
+            "description": "Неверные параметры запроса",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Любая неожиданная ошибка",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -118,41 +116,35 @@
         }
       }
     },
-    "/products/{id}": {
+    "/orders/{order_id}": {
       "get": {
-        "summary": "Метод получения информации товара по идентификатору",
-        "operationId": "getProductById",
         "tags": [
-          "Product"
+          "Orders"
         ],
+        "summary": "Получить информацию о заказе",
+        "operationId": "getOrder",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Идентификатор товара",
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/OrderIdParam"
           }
         ],
         "responses": {
           "200": {
-            "description": "Товар",
+            "description": "Успешный запрос",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Product"
+                  "$ref": "#/components/schemas/OrderDetails"
                 }
               }
             }
           },
-          "default": {
-            "description": "Любая неожиданная ошибка",
+          "404": {
+            "description": "Заказ не найден",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -160,21 +152,14 @@
         }
       },
       "put": {
-        "summary": "Метод обновления информации о товаре в каталоге",
-        "description": "Метод предназначен для обновления в БД данных по имеющемуся товару.",
-        "operationId": "updateProduct",
         "tags": [
-          "Product"
+          "Orders"
         ],
+        "summary": "Полное обновление заказа",
+        "operationId": "replaceOrder",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Идентификатор товара",
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/OrderIdParam"
           }
         ],
         "requestBody": {
@@ -182,77 +167,146 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Product"
+                "$ref": "#/components/schemas/OrderRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Подтверждение успешного обновления",
+            "description": "Заказ обновлен",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Product"
+                  "$ref": "#/components/schemas/OrderDetails"
                 }
               }
             }
           },
           "400": {
-            "description": "Некорректные входные данные. Возвращает список атрибутов с ошибками",
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Orders"
+        ],
+        "summary": "Отменить заказ",
+        "operationId": "cancelOrder",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OrderIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Заказ успешно отменен",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                  "$ref": "#/components/schemas/CancelResponse"
                 }
               }
             }
           },
-          "default": {
-            "description": "Любая неожиданная ошибка",
+          "403": {
+            "description": "Отмена запрещена",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           }
         }
-      },
-      "delete": {
-        "summary": "Метод удаления товара по идентификатору",
-        "operationId": "deleteProductById",
+      }
+    },
+    "/drivers/{driver_id}": {
+      "patch": {
         "tags": [
-          "Product"
+          "Drivers"
         ],
+        "summary": "Обновить данные водителя",
+        "operationId": "updateDriver",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Идентификатор товара",
-            "schema": {
-              "type": "string"
+            "$ref": "#/components/parameters/DriverIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverUpdateRequest"
+              }
             }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Данные обновлены",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverUpdateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Требуется авторизация",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/drivers": {
+      "get": {
+        "tags": [
+          "Drivers"
+        ],
+        "summary": "Поиск доступных водителей",
+        "operationId": "findDrivers",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LatitudeParam"
+          },
+          {
+            "$ref": "#/components/parameters/LongitudeParam"
+          },
+          {
+            "$ref": "#/components/parameters/RadiusParam"
+          },
+          {
+            "$ref": "#/components/parameters/CarTypeParam"
           }
         ],
         "responses": {
           "200": {
-            "description": "Успешное удаление",
-            "content": {
-              "application/json": {}
-            }
-          },
-          "default": {
-            "description": "Любая неожиданная ошибка",
+            "description": "Успешный запрос",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/AvailableDriversResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ошибка сервера",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -262,44 +316,301 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "OrderIdParam": {
+        "name": "order_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "order_67890"
+      },
+      "DriverIdParam": {
+        "name": "driver_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "drv_54321"
+      },
+      "LatitudeParam": {
+        "name": "latitude",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "number",
+          "format": "double"
+        },
+        "example": 55.751244
+      },
+      "LongitudeParam": {
+        "name": "longitude",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "number",
+          "format": "double"
+        },
+        "example": 37.618423
+      },
+      "RadiusParam": {
+        "name": "radius",
+        "in": "query",
+        "schema": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 50
+        },
+        "example": 3
+      },
+      "CarTypeParam": {
+        "name": "car_type",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "economy",
+            "comfort",
+            "business",
+            "minivan"
+          ]
+        },
+        "example": "economy"
+      },
+      "OrderListLimit": {
+        "name": "limit",
+        "in": "query",
+        "description": "page limit",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "default": 20
+        }
+      },
+      "OrderListOffset": {
+        "name": "offset",
+        "in": "query",
+        "description": "page offset",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "default": 0
+        }
+      }
+    },
     "schemas": {
-      "Product": {
+      "OrderRequest": {
         "type": "object",
         "required": [
-          "name",
-          "status"
+          "pickup_address",
+          "destination_address",
+          "customer_id"
         ],
         "properties": {
-          "product_id": {
+          "pickup_address": {
             "type": "string",
-            "example": "42abcd2b-8b9c-4af9-88f7-0bc180cf74b4"
+            "minLength": 5
           },
-          "name": {
-            "description": "Название продукта",
+          "destination_address": {
             "type": "string",
-            "example": "Product1"
+            "minLength": 5
+          },
+          "customer_id": {
+            "type": "string",
+            "pattern": "^cust_[a-zA-Z0-9]+$"
+          },
+          "preferred_car_type": {
+            "type": "string",
+            "enum": [
+              "economy",
+              "comfort",
+              "business",
+              "minivan"
+            ],
+            "default": "economy"
           }
         }
       },
-      "Products": {
-        "type": "array",
-        "items": {
-          "$ref": "#/components/schemas/Product"
+      "OrderResponse": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "cancelled",
+              "completed"
+            ]
+          },
+          "estimated_arrival": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estimated_price": {
+            "type": "number",
+            "format": "float"
+          }
         }
       },
-      "Error": {
+      "OrderDetails": {
         "type": "object",
-        "required": [
-          "code",
-          "message"
-        ],
         "properties": {
-          "code": {
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "driver_id": {
+            "type": "string"
+          },
+          "driver_name": {
+            "type": "string"
+          },
+          "car_model": {
+            "type": "string"
+          },
+          "car_number": {
+            "type": "string"
+          },
+          "current_location": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "estimated_arrival": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CancelResponse": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "refund_amount": {
+            "type": "number"
+          }
+        }
+      },
+      "DriverUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "current_status": {
+            "type": "string",
+            "enum": [
+              "online",
+              "offline",
+              "busy"
+            ]
+          },
+          "car_mileage": {
             "type": "integer",
-            "format": "int32"
+            "minimum": 0
+          }
+        }
+      },
+      "DriverUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "driver_id": {
+            "type": "string"
+          },
+          "updated_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "update_time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AvailableDriversResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "drivers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DriverInfo"
+            }
+          }
+        }
+      },
+      "DriverInfo": {
+        "type": "object",
+        "properties": {
+          "driver_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "car_model": {
+            "type": "string"
+          },
+          "car_type": {
+            "type": "string"
+          },
+          "distance": {
+            "type": "number"
+          },
+          "rating": {
+            "type": "number",
+            "maximum": 5
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error_code": {
+            "type": "string"
           },
           "message": {
             "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Неверные параметры запроса",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
           }
         }
       }
